@@ -1,0 +1,140 @@
+-- Place this LocalScript inside StarterGui
+
+--// GUI Creation
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Create ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "ExecutorUI"
+screenGui.Parent = playerGui
+
+-- Create Open Button
+local openButton = Instance.new("TextButton")
+openButton.Size = UDim2.new(0, 100, 0, 40)
+openButton.Position = UDim2.new(0, 20, 0, 20)
+openButton.Text = "Open"
+openButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+openButton.TextColor3 = Color3.new(1, 1, 1)
+openButton.Parent = screenGui
+
+-- Create Main Frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 320, 0, 400)
+mainFrame.Position = UDim2.new(0.5, -160, 0.5, -200)
+mainFrame.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Visible = false
+mainFrame.Parent = screenGui
+
+-- Title Label
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 40)
+title.Text = "ilikerobloximnozk's Executor"
+title.TextColor3 = Color3.new(1, 1, 1)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.SourceSansBold
+title.TextScaled = true
+title.Parent = mainFrame
+
+-- Add Buttons
+local function newButton(text, y)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, -20, 0, 35)
+	btn.Position = UDim2.new(0, 10, 0, y)
+	btn.Text = text
+	btn.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+	btn.TextColor3 = Color3.new(1, 1, 1)
+	btn.Parent = mainFrame
+	return btn
+end
+
+local titleBtn = newButton("Title Yourself", 60)
+local armsBtn = newButton("Chicken Arms", 105)
+local floatBtn = newButton("Floating Pad", 150)
+local musicBtn = newButton("Play Music", 195)
+
+-- Settings Section
+local settingsTitle = newButton("Settings", 245)
+settingsTitle.BackgroundColor3 = Color3.fromRGB(80, 0, 0)
+
+local pitchLabel = newButton("Music Pitch: 0.21", 290)
+local volumeLabel = newButton("Music Volume: 2.5", 335)
+local idLabel = newButton("Music ID: 72089843969979", 380)
+
+-- BillboardGui
+local billboard = Instance.new("BillboardGui")
+billboard.Size = UDim2.new(0, 200, 0, 50)
+billboard.StudsOffset = Vector3.new(0, 3, 0)
+billboard.AlwaysOnTop = true
+
+local nameLabel = Instance.new("TextLabel")
+nameLabel.Size = UDim2.new(1, 0, 1, 0)
+nameLabel.BackgroundTransparency = 0.5
+nameLabel.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+nameLabel.Text = "ilikerobloximnozk"
+nameLabel.TextColor3 = Color3.new(1, 1, 1)
+nameLabel.TextScaled = true
+nameLabel.Parent = billboard
+
+--// Functions
+local musicSound = Instance.new("Sound")
+musicSound.SoundId = "rbxassetid://72089843969979"
+musicSound.Volume = 2.5
+musicSound.PlaybackSpeed = 0.21
+musicSound.Looped = true
+musicSound.Parent = workspace
+
+openButton.MouseButton1Click:Connect(function()
+	mainFrame.Visible = not mainFrame.Visible
+	openButton.Text = mainFrame.Visible and "Close" or "Open"
+end)
+
+titleBtn.MouseButton1Click:Connect(function()
+	billboard.Parent = player.Character:WaitForChild("Head")
+end)
+
+armsBtn.MouseButton1Click:Connect(function()
+	local char = player.Character
+	if not char then return end
+	local right = char:FindFirstChild("Right Arm") or char:FindFirstChild("RightUpperArm")
+	local left = char:FindFirstChild("Left Arm") or char:FindFirstChild("LeftUpperArm")
+	if right then right.CFrame = right.CFrame * CFrame.Angles(0, math.rad(45), 0) end
+	if left then left.CFrame = left.CFrame * CFrame.Angles(0, math.rad(-45), 0) end
+end)
+
+floatBtn.MouseButton1Click:Connect(function()
+	local char = player.Character
+	if not char then return end
+	local hrp = char:WaitForChild("HumanoidRootPart")
+
+	local pad = Instance.new("Part")
+	pad.Size = Vector3.new(5, 1, 5)
+	pad.Color = Color3.fromRGB(128, 0, 255)
+	pad.Anchored = false
+	pad.CanCollide = true
+	pad.Position = hrp.Position - Vector3.new(0, 3, 0)
+	pad.Parent = workspace
+
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = pad
+	weld.Part1 = hrp
+	weld.Parent = pad
+
+	-- Float effect
+	local bodyVelocity = Instance.new("BodyVelocity")
+	bodyVelocity.Velocity = Vector3.new(0, 10, 0)
+	bodyVelocity.MaxForce = Vector3.new(0, 1000, 0)
+	bodyVelocity.Parent = pad
+
+	game:GetService("Debris"):AddItem(pad, 10)
+end)
+
+musicBtn.MouseButton1Click:Connect(function()
+	if not musicSound.IsPlaying then
+		musicSound:Play()
+	else
+		musicSound:Stop()
+	end
+end)
