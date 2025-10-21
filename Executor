@@ -1,0 +1,53 @@
+-- Execute button action (SAFE, persistent)
+execBtn.MouseButton1Click:Connect(function()
+    local text = inputBox.Text or ""
+    if text == "" then
+        topLabel.Text = "Type here  —  (you typed nothing)"
+        delay(2, function() if topLabel then topLabel.Text = "Type here  —  REQUIRE executor" end end)
+        return
+    end
+
+    local cmd, arg = parseInput(text)
+    if not cmd then
+        topLabel.Text = "Invalid input"
+        delay(2, function() if topLabel then topLabel.Text = "Type here  —  REQUIRE executor" end end)
+        return
+    end
+
+    -- Safe execution with pcall
+    local success, err = pcall(function()
+        if safeCommands[cmd] then
+            safeCommands[cmd](arg)
+            -- show executed indicator
+            local executedLabel = Instance.new("TextLabel")
+            executedLabel.Size = UDim2.new(0, 120, 0, 24)
+            executedLabel.Position = UDim2.new(1, -130, 0, 8)
+            executedLabel.AnchorPoint = Vector2.new(0,0)
+            executedLabel.BackgroundTransparency = 0.2
+            executedLabel.BackgroundColor3 = Color3.fromRGB(20,20,20)
+            executedLabel.TextColor3 = Color3.new(1,1,1)
+            executedLabel.Text = "exécuté"
+            executedLabel.Font = Enum.Font.SourceSansBold
+            executedLabel.TextScaled = true
+            executedLabel.Parent = main
+            delay(1.6, function() if executedLabel and executedLabel.Parent then executedLabel:Destroy() end end)
+        else
+            -- disallowed command: show warning and do nothing
+            local warnLabel = Instance.new("TextLabel")
+            warnLabel.Size = UDim2.new(1, -20, 0, 30)
+            warnLabel.Position = UDim2.new(0, 10, 1, -40)
+            warnLabel.BackgroundTransparency = 0.4
+            warnLabel.BackgroundColor3 = Color3.fromRGB(70,20,20)
+            warnLabel.TextColor3 = Color3.new(1,1,1)
+            warnLabel.Text = "Command not allowed: " .. cmd
+            warnLabel.Font = Enum.Font.SourceSans
+            warnLabel.TextScaled = true
+            warnLabel.Parent = main
+            delay(2.5, function() if warnLabel and warnLabel.Parent then warnLabel:Destroy() end end)
+        end
+    end)
+
+    if not success then
+        warn("Command failed: " .. tostring(err)) -- just logs the error; GUI keeps running
+    end
+end)
