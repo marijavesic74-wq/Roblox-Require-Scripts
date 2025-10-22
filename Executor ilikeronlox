@@ -1,0 +1,77 @@
+-- Self-contained UI, client-only effects
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local PlayerGui = player:WaitForChild("PlayerGui")
+
+-- Remove old UI
+local old = PlayerGui:FindFirstChild("IlikerUI")
+if old then old:Destroy() end
+
+-- ScreenGui
+local screenGui = Instance.new("ScreenGui", PlayerGui)
+screenGui.Name = "IlikerUI"
+
+-- Main frame
+local mainFrame = Instance.new("Frame", screenGui)
+mainFrame.Size = UDim2.new(0,130,0,150)
+mainFrame.Position = UDim2.new(0,5,0,5)
+mainFrame.BackgroundColor3 = Color3.fromRGB(0,0,0)
+
+-- Top red bar
+local topBar = Instance.new("Frame", mainFrame)
+topBar.Size = UDim2.new(1,0,0,28)
+topBar.Position = UDim2.new(0,0,0,0)
+topBar.BackgroundColor3 = Color3.fromRGB(255,0,0)
+
+-- Label
+local label = Instance.new("TextLabel", mainFrame)
+label.Size = UDim2.new(1,-8,0,20)
+label.Position = UDim2.new(0,4,0.35,0)
+label.BackgroundTransparency = 1
+label.Text = "by ilikerobloximnozk"
+label.TextColor3 = Color3.fromRGB(255,255,255)
+label.TextScaled = true
+label.Font = Enum.Font.SourceSansBold
+
+-- Buttons (static, only client effects)
+local function makeButton(name, posY, callback)
+	local btn = Instance.new("TextButton", mainFrame)
+	btn.Size = UDim2.new(1,-8,0,28)
+	btn.Position = UDim2.new(0,4,0,posY)
+	btn.Text = name
+	btn.Font = Enum.Font.SourceSansBold
+	btn.TextSize = 14
+	btn.BackgroundColor3 = Color3.fromRGB(255,0,0)
+	btn.TextColor3 = Color3.fromRGB(255,255,255)
+	btn.MouseButton1Click:Connect(callback)
+end
+
+-- 666 -> change frame colors
+makeButton("666", 50, function()
+	mainFrame.BackgroundColor3 = Color3.fromRGB(255,0,0)
+	topBar.BackgroundColor3 = Color3.fromRGB(255,0,0)
+end)
+
+-- Music -> play sound
+makeButton("Music", 85, function()
+	local s = Instance.new("Sound", workspace)
+	s.SoundId = "rbxassetid://72089843969979"
+	s.Volume = 3.5
+	s.PlaybackSpeed = 0.21
+	s:Play()
+end)
+
+-- MSG -> show screen message
+makeButton("MSG", 120, function()
+	local tmp = Instance.new("ScreenGui", PlayerGui)
+	local msg = Instance.new("TextLabel", tmp)
+	msg.Size = UDim2.new(0,220,0,36)
+	msg.Position = UDim2.new(0,5,0,5)
+	msg.BackgroundColor3 = Color3.fromRGB(0,0,0)
+	msg.BackgroundTransparency = 0.2
+	msg.TextColor3 = Color3.fromRGB(255,0,0)
+	msg.Text = "GET HACKED BY ILIKEROBLOXIMNOZK"
+	msg.Font = Enum.Font.SourceSansBold
+	msg.TextSize = 16
+	task.delay(5, function() tmp:Destroy() end)
+end)
