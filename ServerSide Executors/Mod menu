@@ -1,0 +1,365 @@
+-- COMPLETE WORKING MOD MENU (SAFE) - Put this LocalScript in StarterPlayerScripts
+-- Buttons: InfiniteJump, Fly (float), Spin, AutoFling (local), Grab Knife, Shutdown (local simulate),
+-- KillAll (local respawn), Bloxy Cola (gives consumable). DownloadDelta opens subpanel only.
+-- No notifications, no badges, no server-harm. Self-contained and robust.
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+local guiParent = player:WaitForChild("PlayerGui")
+
+local function new(class, props)
+    local obj = Instance.new(class)
+    if props then
+        for k, v in pairs(props) do
+            pcall(function() obj[k] = v end)
+        end
+    end
+    return obj
+end
+
+-- ---------- BUILD GUI ----------
+local screenGui = new("ScreenGui", {Name = "ModMenuDemo", Parent = guiParent, ResetOnSpawn = false})
+
+-- Main frame
+local mainFrame = new("Frame", {
+    Parent = screenGui,
+    Name = "MainFrame",
+    BackgroundColor3 = Color3.fromRGB(255,255,255),
+    Size = UDim2.new(0,160,0,440),
+    Position = UDim2.new(0,10,0,60)
+})
+new("UICorner", {Parent = mainFrame, CornerRadius = UDim.new(0,12)})
+
+local title = new("TextLabel", {
+    Parent = mainFrame,
+    Text = "mod menu",
+    Font = Enum.Font.SourceSansBold,
+    TextSize = 14,
+    TextColor3 = Color3.fromRGB(20,20,20),
+    BackgroundTransparency = 1,
+    Size = UDim2.new(1,0,0,28),
+    Position = UDim2.new(0,0,0,0)
+})
+
+local mainScroll = new("ScrollingFrame", {
+    Parent = mainFrame,
+    BackgroundTransparency = 1,
+    Size = UDim2.new(1,0,1,-28),
+    Position = UDim2.new(0,0,0,28),
+    CanvasSize = UDim2.new(0,0,0,0),
+    ScrollBarThickness = 6
+})
+local mainLayout = new("UIListLayout", {Parent = mainScroll, Padding = UDim.new(0,6), SortOrder = Enum.SortOrder.LayoutOrder})
+mainLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    mainScroll.CanvasSize = UDim2.new(0,0,0, mainLayout.AbsoluteContentSize.Y + 6)
+end)
+
+local function makeButton(parent,name,text,color)
+    local b = new("TextButton", {
+        Parent = parent,
+        Name = name,
+        Text = text,
+        BackgroundColor3 = color,
+        TextColor3 = Color3.fromRGB(255,255,255),
+        Font = Enum.Font.SourceSansBold,
+        TextSize = 13,
+        Size = UDim2.new(1,0,0,36)
+    })
+    new("UICorner", {Parent = b, CornerRadius = UDim.new(0,8)})
+    return b
+end
+
+-- Buttons (full list)
+local buttonsOrder = {
+    {"InfiniteJump","Infinite jump"},
+    {"Fly","Fly (float)"},
+    {"Spin","Spin to 99"},
+    {"AutoFling","Auto fling (local)"},
+    {"DownloadDelta","Download Delta"},
+    {"GrabKnife","Grab Knife v4"},
+    {"Shutdown","SHUTDOWN (sim)"},
+    {"KillAll","Kill All"},
+    {"BloxyCola","Bloxy Cola"}
+}
+local buttons = {}
+for i, pair in ipairs(buttonsOrder) do
+    local name, text = pair[1], pair[2]
+    local color = (name == "Shutdown" or name == "KillAll") and Color3.fromRGB(170,0,0) or Color3.fromRGB(0,170,0)
+    buttons[name] = makeButton(mainScroll, name, text, color)
+end
+
+-- Thank you label
+local thankLabel = new("TextLabel", {
+    Parent = mainScroll,
+    Text = "Thank for using mod",
+    Font = Enum.Font.SourceSans,
+    TextSize = 12,
+    TextColor3 = Color3.fromRGB(0,0,0),
+    BackgroundTransparency = 1,
+    Size = UDim2.new(1,0,0,20)
+})
+
+-- ---------- DELTA SUB-PANEL ----------
+local deltaPanel = new("Frame", {
+    Parent = screenGui,
+    Name = "DeltaExecutorPanel",
+    Size = UDim2.new(0,180,0,260),
+    Position = UDim2.new(1,-190,0,60),
+    BackgroundColor3 = Color3.fromRGB(30,30,30),
+    Visible = false
+})
+new("UICorner", {Parent = deltaPanel, CornerRadius = UDim.new(0,12)})
+
+local topLabel = new("TextLabel", {
+    Parent = deltaPanel,
+    Text = "Scripts",
+    Size = UDim2.new(1,0,0,28),
+    BackgroundColor3 = Color3.fromRGB(50,50,50),
+    TextColor3 = Color3.fromRGB(255,255,255),
+    Font = Enum.Font.SourceSansBold,
+    TextSize = 14
+})
+new("UICorner", {Parent = topLabel})
+
+local scriptScroll = new("ScrollingFrame", {
+    Parent = deltaPanel,
+    BackgroundTransparency = 1,
+    Position = UDim2.new(0,4,0,32),
+    Size = UDim2.new(1,-8,1,-70),
+    CanvasSize = UDim2.new(0,0,0,0),
+    ScrollBarThickness = 6
+})
+local scriptLayout = new("UIListLayout", {Parent = scriptScroll, Padding = UDim.new(0,6), SortOrder = Enum.SortOrder.LayoutOrder})
+scriptLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    scriptScroll.CanvasSize = UDim2.new(0,0,0, scriptLayout.AbsoluteContentSize.Y + 6)
+end)
+
+local deltaScripts = {"C00lGUI","Grow a garden","Steal a brainrot","Delta keyboard","Grab knife v4"}
+for i,name in ipairs(deltaScripts) do
+    local b = makeButton(scriptScroll, "Script_"..i, name, Color3.fromRGB(0,170,0))
+    -- placeholder: does nothing (safe)
+end
+
+local bottomLabel = new("TextLabel", {
+    Parent = deltaPanel,
+    Text = "No more scripts",
+    Size = UDim2.new(1,0,0,20),
+    Position = UDim2.new(0,0,1,-20),
+    BackgroundTransparency = 1,
+    TextColor3 = Color3.fromRGB(200,200,200),
+    Font = Enum.Font.SourceSans,
+    TextSize = 11
+})
+
+local exitBtn = makeButton(deltaPanel,"TryExit","Try Exit",Color3.fromRGB(170,0,0))
+exitBtn.Size = UDim2.new(0,80,0,28)
+exitBtn.Position = UDim2.new(0.5,-40,0,30)
+exitBtn.MouseButton1Click:Connect(function()
+    deltaPanel.Visible = false
+end)
+
+-- DownloadDelta opens sub-panel
+buttons["DownloadDelta"].MouseButton1Click:Connect(function()
+    deltaPanel.Visible = true
+end)
+
+-- ---------- FEATURE IMPLEMENTATIONS (safe, local) ----------
+
+-- track character/humanoid/root
+local char, hum, root
+local function refreshCharRefs()
+    char = player.Character
+    if char then
+        hum = char:FindFirstChildOfClass("Humanoid")
+        root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
+    else
+        hum = nil
+        root = nil
+    end
+end
+refreshCharRefs()
+player.CharacterAdded:Connect(function(c)
+    char = c
+    wait(0.1)
+    refreshCharRefs()
+end)
+player.CharacterRemoving:Connect(function() char, hum, root = nil, nil, nil end)
+
+-- Infinite Jump
+local infiniteJump = false
+buttons["InfiniteJump"].MouseButton1Click:Connect(function()
+    infiniteJump = not infiniteJump
+    buttons["InfiniteJump"].Text = infiniteJump and "Infinite jump ✅" or "Infinite jump"
+end)
+UserInputService.JumpRequest:Connect(function()
+    if infiniteJump then
+        refreshCharRefs()
+        if hum then
+            hum:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+-- Fly (simple float using BodyVelocity) - local to client
+local flyEnabled = false
+local flyBV
+buttons["Fly"].MouseButton1Click:Connect(function()
+    flyEnabled = not flyEnabled
+    buttons["Fly"].Text = flyEnabled and "Fly (float) ✅" or "Fly (float)"
+    refreshCharRefs()
+    if flyEnabled and root then
+        if flyBV and flyBV.Parent then flyBV:Destroy() end
+        flyBV = Instance.new("BodyVelocity")
+        flyBV.MaxForce = Vector3.new(4e4,4e4,4e4)
+        flyBV.Velocity = Vector3.new(0,0.5,0)
+        flyBV.Parent = root
+    else
+        if flyBV and flyBV.Parent then flyBV:Destroy() end
+        flyBV = nil
+    end
+end)
+
+-- Spin (set AssemblyAngularVelocity) - client visual
+local spinEnabled = false
+local spinConn
+buttons["Spin"].MouseButton1Click:Connect(function()
+    spinEnabled = not spinEnabled
+    buttons["Spin"].Text = spinEnabled and "Spin to 99 ✅" or "Spin to 99"
+    refreshCharRefs()
+    if spinEnabled and root then
+        root.AssemblyAngularVelocity = Vector3.new(0,99,0)
+        if spinConn then spinConn:Disconnect() spinConn = nil end
+        spinConn = RunService.Heartbeat:Connect(function()
+            if root and spinEnabled then
+                root.AssemblyAngularVelocity = Vector3.new(0,99,0)
+            end
+        end)
+    else
+        if spinConn then spinConn:Disconnect() spinConn = nil end
+        if root then
+            root.AssemblyAngularVelocity = Vector3.new(0,0,0)
+        end
+    end
+end)
+
+-- AutoFling (local): when your root touches someone, local upward push to you (visual)
+local autoFling = false
+local function enableAutoFlingOnChar(c)
+    if not c then return end
+    local r = c:FindFirstChild("HumanoidRootPart") or c:FindFirstChild("Torso") or c:FindFirstChild("UpperTorso")
+    if not r then return end
+    r.Touched:Connect(function(part)
+        if autoFling then
+            local other = part:FindFirstAncestorOfClass("Model")
+            if other and other ~= c and other:FindFirstChildOfClass("Humanoid") then
+                -- push local player up (visual only)
+                refreshCharRefs()
+                if root then
+                    root.AssemblyLinearVelocity = Vector3.new(0,120,0)
+                end
+            end
+        end
+    end)
+end
+player.CharacterAdded:Connect(function(c)
+    wait(0.2)
+    if autoFling then enableAutoFlingOnChar(c) end
+end)
+
+buttons["AutoFling"].MouseButton1Click:Connect(function()
+    autoFling = not autoFling
+    buttons["AutoFling"].Text = autoFling and "Auto fling ✅" or "Auto fling"
+    if autoFling and player.Character then
+        enableAutoFlingOnChar(player.Character)
+    end
+end)
+
+-- Grab Knife: give a harmless demo tool
+local function giveDemoKnife()
+    refreshCharRefs()
+    local backpack = player:FindFirstChild("Backpack") or player:WaitForChild("Backpack")
+    local tool = Instance.new("Tool")
+    tool.Name = "Demo Knife V4"
+    tool.CanBeDropped = true
+    tool.RequiresHandle = true
+    local handle = Instance.new("Part")
+    handle.Name = "Handle"
+    handle.Size = Vector3.new(1,0.2,0.2)
+    handle.CanCollide = false
+    handle.Parent = tool
+    tool.Parent = backpack
+    tool.Activated:Connect(function()
+        -- visual only
+        if root then
+            local p = Instance.new("Part")
+            p.Size = Vector3.new(0.4,0.4,0.4)
+            p.CanCollide = false
+            p.Anchored = true
+            p.Transparency = 0.4
+            p.CFrame = root.CFrame * CFrame.new(0,0,-2)
+            p.Parent = workspace
+            delay(0.3, function() p:Destroy() end)
+        end
+    end)
+end
+buttons["GrabKnife"].MouseButton1Click:Connect(function() giveDemoKnife() end)
+
+-- Shutdown (simulate): hide GUI and show overlay locally; provide restore button
+buttons["Shutdown"].MouseButton1Click:Connect(function()
+    mainFrame.Visible = false
+    deltaPanel.Visible = false
+    local overlay = new("Frame", {Parent = screenGui, Name = "ShutdownOverlay", BackgroundColor3 = Color3.fromRGB(0,0,0), BackgroundTransparency = 0.25, Size = UDim2.new(1,1,1,1), Position = UDim2.new(0,0,0,0)})
+    local label = new("TextLabel", {Parent = overlay, BackgroundTransparency = 1, Text = "Server shutdown (simulation)", Font = Enum.Font.SourceSansBold, TextSize = 26, Size = UDim2.new(1,0,0,80), Position = UDim2.new(0,0,0.4,0), TextColor3 = Color3.fromRGB(255,255,255)})
+    local restore = makeButton(overlay, "RestoreGUI", "Restore GUI", Color3.fromRGB(0,170,0))
+    restore.Size = UDim2.new(0,160,0,40)
+    restore.Position = UDim2.new(0,10,0,10)
+    restore.MouseButton1Click:Connect(function()
+        overlay:Destroy()
+        mainFrame.Visible = true
+    end)
+end)
+
+-- KillAll (local respawn yourself)
+buttons["KillAll"].MouseButton1Click:Connect(function()
+    refreshCharRefs()
+    if hum then
+        hum.Health = 0
+    else
+        if player.Character then
+            player.Character:BreakJoints()
+        end
+    end
+end)
+
+-- Bloxy Cola: give a consumable that heals + temp jump boost
+local function giveBloxyCola()
+    local backpack = player:FindFirstChild("Backpack") or player:WaitForChild("Backpack")
+    local tool = Instance.new("Tool")
+    tool.Name = "Bloxy Cola"
+    tool.RequiresHandle = true
+    local handle = Instance.new("Part")
+    handle.Name = "Handle"
+    handle.Size = Vector3.new(1,1,1)
+    handle.CanCollide = false
+    handle.Parent = tool
+    tool.Parent = backpack
+    tool.Activated:Connect(function()
+        refreshCharRefs()
+        if hum then
+            hum.Health = math.min(hum.MaxHealth, (hum.Health or 0) + 30)
+            local orig = hum.JumpPower
+            if orig then
+                hum.JumpPower = math.min(200, orig + 30)
+                delay(6, function() if hum then hum.JumpPower = orig end end)
+            end
+        end
+        tool:Destroy()
+    end)
+end
+buttons["BloxyCola"].MouseButton1Click:Connect(function() giveBloxyCola() end)
+
+-- Other buttons are already set; ensure they are placeholders (do nothing else)
+-- End of script
